@@ -51,6 +51,7 @@ int main() {
 	p_tx_buffer = &tx_buffer[0];
 	*p_tx_buffer++ = 'A';
 	*p_tx_buffer++ = 'T';
+	*p_tx_buffer++ = '\r';
 	*p_tx_buffer++ = '\n';
 
 	if (fd != -1) {
@@ -60,6 +61,7 @@ int main() {
 		}
 	}
 
+	printf("SENT!\n");
 	if (fd != -1) {
 		for(;;) {
 			unsigned char rx_buffer[256];
