@@ -10,6 +10,7 @@ typedef struct pipelist {
 
 pipelist *head = NULL;
 pipelist *tail = NULL;
+int maxfd = -1;
 
 /* 
  * These are the variables which hold the pipes required for sending
@@ -53,6 +54,10 @@ int create_pipes() {
 				// Will probably be -1 since there is no thread reading from it
 				// It will need to be dealt with when a read has come through
 				fd = open(pipe, O_WRONLY | O_NONBLOCK);
+			}
+
+			if(fd > maxfd) {
+				maxfd = fd;
 			}
 
 			// I will leave out the names for now
