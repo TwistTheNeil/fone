@@ -33,21 +33,32 @@ int main() {
 		return 1;
 	}
 
-	FD_ZERO(&rfds);
-	pipeindex = head;
-	while(pipeindex != NULL) {
-		FD_SET(pipeindex->fd_in, &rfds);
-		pipeindex = pipeindex->next;
-	}
 
-	retval = select(maxfd+1, &rfds, NULL, NULL, NULL);
-
-	pipeindex = head;
-	while(pipeindex != NULL) {
-		if(FD_ISSET(pipeindex->fd_in, &rfds)) {
-			printf("fd=%d is ready for read\n", pipeindex->fd_in);
+	while(1) {
+		FD_ZERO(&rfds);
+		pipeindex = head;
+		while(pipeindex != NULL) {
+			FD_SET(pipeindex->fd, &rfds);
+			pipeindex = pipeindex->next;
 		}
-		pipeindex = pipeindex->next;
+
+		retval = select(maxfd+1, &rfds, NULL, NULL, NULL);
+
+		if(retval == -1) {
+			fprintf(stderr, "select() error\n");
+		} else if(retval) {
+			pipeindex = head;
+			while(pipeindex != NULL) {
+				if(FD_ISSET(pipeindex->fd, &rfds)) {
+					break;
+				}
+				pipeindex = pipeindex->next;
+			}
+
+			read(pipeindex->fd, buf, PIPE_BUF);
+			printf("read: %s\n", buf);
+		}
+		sleep(1);
 	}
 
 	graceful_exit();
