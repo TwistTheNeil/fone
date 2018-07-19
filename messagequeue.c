@@ -2,6 +2,8 @@
 #include<stdlib.h>
 #include<string.h>
 
+// TODO: Do i really need MessageQueue:length?
+
 typedef enum State {
 	IDLE,
 	WORKING
@@ -75,7 +77,13 @@ void mq_pop() {
 	}
 }
 
-void print_mq() {
+void mq_cleanup() {
+	while(mq.head != NULL) {
+		mq_pop();
+	}
+}
+
+void mq_print() {
 	Message *i = mq.head;
 
 	printf("state: %d\nlength: %d\n", mq.state, mq.length);
