@@ -6,13 +6,28 @@
 //#include<sys/types.h>
 #include<unistd.h>
 #include<limits.h>
+#include<signal.h>
 #include"pipelist.c"
+#include"messagequeue.c"
+
+void graceful_exit() {
+	cleanup_pipes();
+	mq_cleanup();
+}
+
+void sigint_handler() {
+	fprintf(stderr, "freeing memory\n");
+	graceful_exit();
+	exit(0);
+}
 
 int main() {
 	char buf[PIPE_BUF];
 	fd_set rfds;
 	int retval;
 	pipelist *pipeindex;
+
+	signal(SIGINT, sigint_handler);
 
 	if(create_pipes() != 0) {
 		return 1;
@@ -35,6 +50,6 @@ int main() {
 		pipeindex = pipeindex->next;
 	}
 
-
+	graceful_exit();
 	return 0;
 }
