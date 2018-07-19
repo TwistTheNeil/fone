@@ -24,10 +24,15 @@ static const char *sendsmspipe = "npipe_sendsmspipe";
 
 /* Check if the pipes is already created. If not, then try to create them */
 int create_pipes() {
-	int i, j, fd, err;
+	int i, j, err, fd = 0;
 	const char **pipes = calloc(N_PIPE_TYPES, sizeof(char*));
 	const char rw[2][3] = { "_r", "_w" };
 	char *pipe;
+
+	if(pipes == NULL) {
+		fprintf(stderr, "[Error] create_pipes: Couldn't allocate memory\n");
+		return 1;
+	}
 
 	pipes[0] = statuspipe;
 	pipes[1] = sendsmspipe;
@@ -35,6 +40,12 @@ int create_pipes() {
 	for(i=0; i<N_PIPE_TYPES; i++) {
 		for(j=0; j<2; j++) {
 			pipe = calloc(strlen(pipes[i])+strlen(rw[j])+1, sizeof(char));
+			if(pipe == NULL) {
+				fprintf(stderr, "[Error] create_pipes: Couldn't allocate memory\n");
+				free(pipes);
+				return 1;
+			}
+
 			strncpy(pipe, pipes[i], strlen(pipes[i]));
 			strncat(pipe, rw[j], strlen(rw[j]));
 			pipe[strlen(pipes[i])+strlen(rw[j])] = 0;
@@ -43,6 +54,8 @@ int create_pipes() {
 				err = mkfifo(pipe, 0666);
 				if(err != 0) {
 					fprintf(stderr, "[Error] Can't access or create pipe (%s)\n", pipe);
+					free(pipe);
+					free(pipes);
 					return 1;
 				}
 			}
@@ -64,6 +77,13 @@ int create_pipes() {
 			// TODO: either add in the names or get rid of them from the struct
 			if(j%2 == 0) {
 				pipelist *temp = calloc(1, sizeof(pipelist));
+				if(temp == NULL) {
+					free(pipe);
+					free(pipes);
+					fprintf(stderr, "[Error] create_pipes: Couldn't allocate memory\n");
+					return 1;
+				}
+
 				temp->fd_in = fd;
 
 				if(head == NULL) {
@@ -84,4 +104,16 @@ int create_pipes() {
 	free(pipes);
 
 	return 0;
+}
+
+void cleanup_pipes() {
+	pipelist *i;
+
+	while(head != NULL) {
+		i = head;
+		free(head->name_in);
+		free(head->name_out);
+		head = head->next;
+		free(i);
+	}
 }
