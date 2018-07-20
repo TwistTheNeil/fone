@@ -38,15 +38,12 @@ void mq_init() {
 }
 
 void mq_push(char *cmd, int fd) {
-	// Cope the command
 	Message *new_msg = calloc(1, sizeof(Message));
 	new_msg->msg = calloc(strlen(cmd) + 1, sizeof(char));
 	strncpy(new_msg->msg, cmd, strlen(cmd));
 	new_msg->msg[strlen(cmd)] = 0;
 
-	//Copy the pipe fd
 	new_msg->pipe_fd = fd;
-
 	new_msg->next = NULL;
 
 	if(mq.head == NULL) {
@@ -88,7 +85,6 @@ void mq_print() {
 
 	printf("state: %d\nlength: %d\n", mq.state, mq.length);
 	printf("Contents:\n");
-
 
 	while(i != NULL) {
 		printf("[%d] %s\n", i->pipe_fd, i->msg);

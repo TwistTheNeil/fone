@@ -15,10 +15,11 @@ int maxfd = -1;
  * messages/commands between application clients and the server.
  * Any modifications will need to be reflected in create_pipes()
  */
-const int N_PIPE_TYPES = 2;
+const int N_PIPE_TYPES = 3;
 
 static const char *statuspipe = "npipe_status";
 static const char *sendsmspipe = "npipe_sendsmspipe";
+static const char *configpipe = "npipe_config";
 
 /* Check if the pipes is already created. If not, then try to create them */
 int create_pipes() {
@@ -33,6 +34,7 @@ int create_pipes() {
 
 	pipes[0] = statuspipe;
 	pipes[1] = sendsmspipe;
+	pipes[2] = configpipe;
 
 	for(i=0; i<N_PIPE_TYPES; i++) {
 		pipe = calloc(strlen(pipes[i])+1, sizeof(char));

@@ -65,12 +65,12 @@ int uart_init() {
 }
 
 void *write_serial(void* arg) {
-	// TODO: do we need a buf?
-	char buf[PIPE_BUF];
-
 	while(1) {
-		write(fona_fd, "AT\r\n", 4);
-		printf("wrote\n");
+		if(mq.length > 0 && mq.state == IDLE) {
+			mq.state = WORKING;
+			write(fona_fd, (mq.head)->msg, strlen((mq.head)->msg));
+			printf("wrote %d\n", strlen((mq.head)->msg));
+		}
 		sleep(2);
 	}
 
@@ -78,11 +78,31 @@ void *write_serial(void* arg) {
 
 void *read_serial(void* arg) {
 	char buf[PIPE_BUF];
+	int sequential_newline = 0;
 
 	while(1) {
-		read(fona_fd, buf, PIPE_BUF);
-		// TODO: Sane sleep time?
-		printf("read: %s\n", buf);
+		if(mq.length > 0 && mq.state == WORKING) {
+			read(fona_fd, buf, PIPE_BUF);
+			printf("read[%d]: %s\n", strlen(buf), buf);
+			write(mq.head->pipe_fd, buf, strlen(buf));
+			if(buf[strlen(buf)-1] != '\n') {
+				sequential_newline = 0;
+				continue;
+			} else {
+				sequential_newline++;
+				if(sequential_newline == 2) {
+					sequential_newline = 0;
+					mq_pop();
+					sleep(1);
+printf("debug: setting to idle\n");
+					memset(buf, 0, PIPE_BUF);
+					mq.state = IDLE;
+					continue;
+				}
+			}
+		}
+
+		// TODO: Sane sleep time? perhaps in nanoseconds?
 		sleep(1);
 	}
 }
@@ -122,28 +142,39 @@ int main() {
 	}
 
 	while(1) {
-		FD_ZERO(&rfds);
-		pipeindex = head;
-		while(pipeindex != NULL) {
-			FD_SET(pipeindex->fd, &rfds);
-			pipeindex = pipeindex->next;
-		}
-
-		retval = select(maxfd+1, &rfds, NULL, NULL, NULL);
-
-		if(retval == -1) {
-			fprintf(stderr, "select() error\n");
-		} else if(retval) {
+		if(mq.state == IDLE) {
+printf("entered while pipe loop\n");
+			FD_ZERO(&rfds);
 			pipeindex = head;
 			while(pipeindex != NULL) {
-				if(FD_ISSET(pipeindex->fd, &rfds)) {
-					break;
-				}
+				FD_SET(pipeindex->fd, &rfds);
 				pipeindex = pipeindex->next;
 			}
 
-			read(pipeindex->fd, buf, PIPE_BUF);
-			printf("read: %s\n", buf);
+			retval = select(maxfd+1, &rfds, NULL, NULL, NULL);
+
+			if(mq.state != IDLE) {
+				continue;
+			}
+			if(retval == -1) {
+				fprintf(stderr, "select() error\n");
+			} else if(retval) {
+				pipeindex = head;
+				while(pipeindex != NULL) {
+					if(FD_ISSET(pipeindex->fd, &rfds)) {
+						break;
+					}
+					pipeindex = pipeindex->next;
+				}
+
+				memset(buf, 0, PIPE_BUF);
+				read(pipeindex->fd, buf, PIPE_BUF);
+printf("read from client pipe: %s\n", buf);
+				if(strncmp(buf, "AT", 2) == 0) {
+					mq_push(buf, pipeindex->fd);
+				}
+
+			}
 		}
 		sleep(1);
 	}
