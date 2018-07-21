@@ -1,9 +1,5 @@
 #include<stdio.h>
-#include<stdlib.h>
-#include<pthread.h>
 #include<fcntl.h>
-#include<sys/stat.h>
-#include<sys/types.h>
 #include<unistd.h>
 #include<limits.h>
 
@@ -17,6 +13,8 @@ int main() {
 	write(fd, "AT\r\n", 4);
 	close(fd);
 
+	sleep(1);
+
 	fd = open(statuspipe, O_RDONLY);
 	read(fd, buf, PIPE_BUF);
 	printf("Returned: %s\n", buf);
@@ -24,4 +22,3 @@ int main() {
 
 	return 0;
 }
-			
