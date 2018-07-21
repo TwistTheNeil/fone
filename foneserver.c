@@ -66,10 +66,9 @@ int uart_init() {
 
 void *write_serial(void* arg) {
 	while(1) {
-		if(mq.length > 0 && mq.state == IDLE) {
+		if((uart_init() == 0) && mq.length > 0 && mq.state == IDLE) {
 			mq.state = WORKING;
 			write(fona_fd, (mq.head)->msg, strlen((mq.head)->msg));
-			printf("wrote %d\n", strlen((mq.head)->msg));
 		}
 		sleep(2);
 	}
@@ -78,25 +77,25 @@ void *write_serial(void* arg) {
 
 void *read_serial(void* arg) {
 	char buf[PIPE_BUF];
+	char pbuf[PIPE_BUF];
 	int sequential_newline = 0;
+
+	memset(buf, 0, PIPE_BUF);
+	memset(pbuf, 0, PIPE_BUF);
 
 	while(1) {
 		if(mq.length > 0 && mq.state == WORKING) {
 			read(fona_fd, buf, PIPE_BUF);
-			printf("read[%d]: %s\n", strlen(buf), buf);
-			write(mq.head->pipe_fd, buf, strlen(buf));
-			if(buf[strlen(buf)-1] != '\n') {
-				sequential_newline = 0;
-				continue;
-			} else {
-				sequential_newline++;
-				if(sequential_newline == 2) {
-					sequential_newline = 0;
+			strncat(pbuf, buf, strlen(buf));
+			if(strlen(pbuf) > 0 && pbuf[strlen(pbuf)-1] == '\n') {
+				if(strlen(pbuf) > 1 && pbuf[strlen(pbuf)-2] == '\r') {
+					write(mq.head->pipe_fd, pbuf, strlen(pbuf));
 					mq_pop();
-					sleep(1);
-printf("debug: setting to idle\n");
+				//	sleep(1); // TODO: make sure this is not needed again - weird timing issue with main()
 					memset(buf, 0, PIPE_BUF);
+					memset(pbuf, 0, PIPE_BUF);
 					mq.state = IDLE;
+					close(fona_fd);
 					continue;
 				}
 			}
@@ -120,9 +119,9 @@ int main() {
 		return 1;
 	}
 
-	if(uart_init() != 0) {
+	/*if(uart_init() != 0) {
 		return 1;
-	}
+	}*/
 
 	/*
 	 * Create two threads:
@@ -142,38 +141,34 @@ int main() {
 	}
 
 	while(1) {
-		if(mq.state == IDLE) {
-printf("entered while pipe loop\n");
-			FD_ZERO(&rfds);
+		// TODO: May need to check if IDLE
+		FD_ZERO(&rfds);
+		pipeindex = head;
+		while(pipeindex != NULL) {
+			FD_SET(pipeindex->fd, &rfds);
+			pipeindex = pipeindex->next;
+		}
+
+		retval = select(maxfd+1, &rfds, NULL, NULL, NULL);
+
+		if(mq.state != IDLE) {
+			continue;
+		}
+		if(retval == -1) {
+			fprintf(stderr, "select() error\n");
+		} else if(retval) {
 			pipeindex = head;
 			while(pipeindex != NULL) {
-				FD_SET(pipeindex->fd, &rfds);
+				if(FD_ISSET(pipeindex->fd, &rfds)) {
+					break;
+				}
 				pipeindex = pipeindex->next;
 			}
 
-			retval = select(maxfd+1, &rfds, NULL, NULL, NULL);
-
-			if(mq.state != IDLE) {
-				continue;
-			}
-			if(retval == -1) {
-				fprintf(stderr, "select() error\n");
-			} else if(retval) {
-				pipeindex = head;
-				while(pipeindex != NULL) {
-					if(FD_ISSET(pipeindex->fd, &rfds)) {
-						break;
-					}
-					pipeindex = pipeindex->next;
-				}
-
-				memset(buf, 0, PIPE_BUF);
-				read(pipeindex->fd, buf, PIPE_BUF);
-printf("read from client pipe: %s\n", buf);
-				if(strncmp(buf, "AT", 2) == 0) {
-					mq_push(buf, pipeindex->fd);
-				}
-
+			memset(buf, 0, PIPE_BUF);
+			read(pipeindex->fd, buf, PIPE_BUF);
+			if(strncmp(buf, "AT", 2) == 0) {
+				mq_push(buf, pipeindex->fd);
 			}
 		}
 		sleep(1);
