@@ -11,7 +11,28 @@
 #include"pipelist.c"
 #include"messagequeue.c"
 
+/* Prototypes */
+void graceful_exit();
+void sigint_handler();
+int uart_init();
+void *com_read(void* arg);
+void *com_write(void* arg):
+void *write_serial(void* arg);
+void *read_serial(void* arg);
+
+typedef enum serverstate {
+	RUNNING,
+	TERMINATED
+} serverstate;
+
+/* Globals */
 int fona_fd = -1;
+int shared_com_state = 0; //change?
+int shared_com_fd = -1;
+pthread_t shared_com_reader;
+pthread_t shared_com_writer;
+const char *shared_com_pipe = "npipe_shared_com\0";
+serverstate fonestate;
 
 void graceful_exit() {
 	cleanup_pipes();
@@ -64,15 +85,37 @@ int uart_init() {
 	return 0;
 }
 
+int writter_to_shared = 0;
+
+void *com_read(void* arg) {
+
+}
+
+void *com_write(void* arg) {
+	
+}
+
 void *write_serial(void* arg) {
 	while(1) {
-		if((uart_init() == 0) && mq.length > 0 && mq.state == IDLE) {
-			mq.state = WORKING;
-			write(fona_fd, (mq.head)->msg, strlen((mq.head)->msg));
+		if(mq.head != NULL && mq.state == IDLE && (uart_init() == 0)) {
+			mq.state = PROCESSING;
+
+			if(pthread_create(&shared_com_reader, NULL, com_read, NULL) && pthread_create(&shared_com_writer, NULL, com_write, NULL)) {
+				fprintf(stderr, "[Error] creating thread for shared_com\n");
+				mq.state = IDLE;
+			} else {
+				write(fona_fd, (mq.head)->msg, strlen((mq.head)->msg));
+			}
+
+			//TODO: These don't belong here
+			//pthread_join(shared_com_reader, NULL);
+			//pthread_join(shared_com_writer, NULL);
+		} else if(mq.com_head != NULL && mq.state == WORKING) {
+			write(fona_fd, (mq.com_head)->msg, strlen((mq.com_head)->msg));
 		}
+
 		sleep(2);
 	}
-
 }
 
 void *read_serial(void* arg) {
@@ -84,13 +127,17 @@ void *read_serial(void* arg) {
 	memset(pbuf, 0, PIPE_BUF);
 
 	while(1) {
-		if(mq.length > 0 && mq.state == WORKING) {
+		if(mq.head != NULL && mq.state == PROCESSING) {
+			//send client the pipe details
+
+			//TODO: perhaps this else if should use mq.com_head?
+		} else if(mq.head != NULL && mq.state == WORKING) {
 			read(fona_fd, buf, PIPE_BUF);
 			strncat(pbuf, buf, strlen(buf));
 			if(strlen(pbuf) > 0 && pbuf[strlen(pbuf)-1] == '\n') {
 				if(strlen(pbuf) > 1 && pbuf[strlen(pbuf)-2] == '\r') {
 					write(mq.head->pipe_fd, pbuf, strlen(pbuf));
-					mq_pop();
+					mq_pop(CMD);
 				//	sleep(1); // TODO: make sure this is not needed again - weird timing issue with main()
 					memset(buf, 0, PIPE_BUF);
 					memset(pbuf, 0, PIPE_BUF);
@@ -140,6 +187,8 @@ int main() {
 		return 2;
 	}
 
+	fonestate = RUNNING;
+
 	while(1) {
 		// TODO: May need to check if IDLE
 		FD_ZERO(&rfds);
@@ -150,8 +199,8 @@ int main() {
 		}
 
 		retval = select(maxfd+1, &rfds, NULL, NULL, NULL);
-
-		if(mq.state != IDLE) {
+		if(mq.state == PROCESSING) {
+			// prevent racing read with pipe
 			continue;
 		}
 		if(retval == -1) {
@@ -168,8 +217,9 @@ int main() {
 			memset(buf, 0, PIPE_BUF);
 			read(pipeindex->fd, buf, PIPE_BUF);
 			if(strncmp(buf, "AT", 2) == 0) {
-				mq_push(buf, pipeindex->fd);
+				mq_push(buf, CMD, pipeindex->fd);
 			}
+			mq_print();
 		}
 		sleep(1);
 	}
