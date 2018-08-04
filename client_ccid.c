@@ -8,7 +8,8 @@
 int main() {
 	char *buf = calloc(PIPE_BUF, sizeof(char));
 	int in_fd, out_fd;
-	int retval;
+
+	init_fone_client();
 
 	if(send_hello(&in_fd, &out_fd) != 0) {
 		return 1;
@@ -18,5 +19,6 @@ int main() {
 	read(in_fd, buf, PIPE_BUF);
 	printf("Returned:  %s\n", buf);
 
-	return 0;
+	free(buf);
+	return send_finish(&in_fd, &out_fd);
 }

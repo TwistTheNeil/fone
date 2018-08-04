@@ -1,5 +1,10 @@
 #include<string.h>
+#include<signal.h>
 #include"shared_pipes.h"
+
+int init_fone_client() {
+	signal(SIGPIPE, SIG_IGN);
+}
 
 /*
  * Sends a hello and returns a file descriptor to a named pipe
@@ -11,6 +16,10 @@ int send_hello(int *in_fd, int *out_fd) {
 	char buf[PIPE_BUF];
 	char *pipename = calloc(40, sizeof(char));
 
+	/*
+	 * Open ctl pipe to send hello and receive
+	 * a data pipe for further communication
+	 */
 	fd = open(fa2s_ctl, O_WRONLY);
 	if(fd < 0) {
 		fprintf(stderr, "[Error]: Couldn't communicate to ctl\n");
@@ -21,8 +30,6 @@ int send_hello(int *in_fd, int *out_fd) {
 		return 1;
 	}
 	close(fd);
-
-	sleep(1);
 
 	fd = open(fs2a_ctl, O_RDONLY);
 	if(fd < 0) {
@@ -35,12 +42,18 @@ int send_hello(int *in_fd, int *out_fd) {
 	}
 	close(fd);
 
+	/* Wait for server to create pipes */
+	sleep(1);
 
+	/*
+	 * Construct data pipe names and
+	 * open them for communication
+	 */
 	pipename[0] = 'f'; pipename[1] = 's'; pipename[2] = '2'; pipename[3] = 'a';
 	pipename[4] = '_';
 	*in_fd = open(strncat(pipename, buf, 32), O_RDONLY);
 	if(*in_fd < 0) {
-		fprintf(stderr, "[Error]: Couldn't data pipe for reading (%s)\n", pipename);
+		fprintf(stderr, "[Error]: Couldn't open data pipe for reading (%s)\n", pipename);
 		return 1;
 	}
 
@@ -51,5 +64,20 @@ int send_hello(int *in_fd, int *out_fd) {
 		return 1;
 	}
 
+	free(pipename);
+	return 0;
+}
+
+int send_finish(int *in_fd, int *out_fd) {
+	if(write(*out_fd, "finish\n", 7) != 7) {
+		fprintf(stderr, "[Error]: Couldn't send finish to ctl\n");
+		close(*in_fd);
+		close(*out_fd);
+		return 1;
+		// TODO: How would we handle this on the server side?
+	}
+
+	close(*in_fd);
+	close(*out_fd);
 	return 0;
 }
