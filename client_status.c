@@ -1,24 +1,24 @@
 #include<stdio.h>
+#include<stdlib.h>
 #include<fcntl.h>
 #include<unistd.h>
 #include<limits.h>
-
-static const char *statuspipe = "npipe_status";
+#include"application_protocol.h"
 
 int main() {
-	int fd;
-	char buf[PIPE_BUF];
+	char *buf = calloc(PIPE_BUF, sizeof(char));
+	int in_fd, out_fd;
 
-	fd = open(statuspipe, O_WRONLY);
-	write(fd, "AT\r\n", 4);
-	close(fd);
+	init_fone_client();
 
-	sleep(1);
+	if(send_hello(&in_fd, &out_fd) != 0) {
+		return 1;
+	}
 
-	fd = open(statuspipe, O_RDONLY);
-	read(fd, buf, PIPE_BUF);
-	printf("Returned: %s\n", buf);
-	close(fd);
+	write(out_fd, "AT\r\n", 4);
+	read(in_fd, buf, PIPE_BUF);
+	printf("Returned:  %s\n", buf);
 
-	return 0;
+	free(buf);
+	return send_finish(&in_fd, &out_fd);
 }
