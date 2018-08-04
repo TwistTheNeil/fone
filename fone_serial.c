@@ -1,25 +1,17 @@
-//#include<stdio.h>
-//#include<pthread.h>
-//#include<stdlib.h>
-//#include<fcntl.h>
-//#include<sys/stat.h>
 #include<termios.h>
-//#include<unistd.h>
-//#include<limits.h>
-//#include<signal.h>
 #include"messagequeue.c"
 
 /* Prototypes */
-int uart_init();
-void uart_close();
-void *write_serial(void* arg);
-void *read_serial(void* arg);
+static int uart_init();
+static void uart_close();
+static void *write_serial(void* arg);
+static void *read_serial(void* arg);
 
 /* Globals */
 static int fona_fd_r = -1;
 static int fona_fd_w = -1;
 
-int uart_init() {
+static int uart_init() {
 	struct termios options_r, options_w;
 
 	fona_fd_r = open("/dev/serial0", O_RDONLY | O_NOCTTY | O_NDELAY);
@@ -84,14 +76,14 @@ int uart_init() {
 	return 0;
 }
 
-void uart_close() {
+static void uart_close() {
 	close(fona_fd_r);
 	fona_fd_r = -1;
 	close(fona_fd_w);
 	fona_fd_w = -1;
 }
 
-void *write_serial(void* arg) {
+static void *write_serial(void* arg) {
 	while(1) {
 		if(mq.head != NULL && mq.last != mq.tail && (fona_fd_w > 0 || (uart_init() == 0))) {
 			if(mq.last == NULL) {
@@ -109,7 +101,7 @@ void *write_serial(void* arg) {
 	}
 }
 
-void *read_serial(void* arg) {
+static void *read_serial(void* arg) {
 	char buf[PIPE_BUF];
 	char pbuf[PIPE_BUF];
 	int sequential_newline = 0;

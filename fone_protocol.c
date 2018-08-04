@@ -9,14 +9,14 @@
 #include"shared_pipes.h"
 #include"fone_serial.c"
 
-void *process_client_r(void *arg);
-void *ctl_thread(void *arg);
-int create_pipe(const char *pipe);
-int create_pipes();
+static void *process_client_r(void *arg);
+static void *ctl_thread(void *arg);
+static int create_pipe(const char *pipe);
+static int create_pipes();
 
 static int data_pipe_created = 0;
 
-void *process_client(void *arg) {
+static void *process_client(void *arg) {
 	char *name = (char *) arg;
 	char *name_reader = calloc(40, sizeof(char));
 	char *name_writer = calloc(40, sizeof(char));
@@ -33,7 +33,7 @@ void *process_client(void *arg) {
 		return NULL; // TODO
 	}
 
-	/* Create rdonly pipe and start reading in a thread */
+	/* Create rdonly pipe */
 	name_reader[0] = 'f'; name_reader[1] = 'a'; name_reader[2] = '2'; name_reader[3] = 's';
 	name_reader[4] = '_';
 	strncat(name_reader, name, 32);
@@ -48,13 +48,11 @@ void *process_client(void *arg) {
 		fprintf(stderr, "[Fatal] Can't open pipe (%s) fd to process client write: error %d\n", name_writer, w_fd);
 		return NULL; // TODO
 	}
-		r_fd = open(name_reader, O_RDONLY);
-		if(r_fd < 0) {
-			fprintf(stderr, "[Fatal] Can't open pipe (%s) fd to process client read: error %d\n", name, r_fd);
-			//break; // TODO
-		//	continue;
-		return NULL;
-		}
+	r_fd = open(name_reader, O_RDONLY);
+	if(r_fd < 0) {
+		fprintf(stderr, "[Fatal] Can't open pipe (%s) fd to process client read: error %d\n", name, r_fd);
+		return NULL; // TODO
+	}
 
 	while(1) {
 		memset(buf, 0, PIPE_BUF);
@@ -81,7 +79,7 @@ void *process_client(void *arg) {
 /*
  * This is the control loop
  */
-void *ctl_thread(void *arg) {
+static void *ctl_thread(void *arg) {
 	char *buf = calloc(PIPE_BUF, sizeof(char));
 	char *random32 = calloc(32, sizeof(char));
 	int fd, i;
@@ -132,12 +130,9 @@ void *ctl_thread(void *arg) {
 	}
 }
 
-int create_pipe(const char *pipe) {
-	int err;
-
+static int create_pipe(const char *pipe) {
 	if(access(pipe, F_OK) == -1) {
-		err = mkfifo(pipe, 0666);
-		if(err != 0) {
+		if(mkfifo(pipe, 0666) != 0) {
 			fprintf(stderr, "[Error] can't access or create pipe \"%s\"\n", pipe);
 			return 1;
 		}
@@ -145,7 +140,7 @@ int create_pipe(const char *pipe) {
 	return 0;
 }
 
-int create_pipes() {
+static int create_pipes() {
 	pthread_t ctl_thread_t;
 
 	if(create_pipe(fa2s_ctl) != 0) {
