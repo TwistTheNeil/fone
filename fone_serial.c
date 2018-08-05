@@ -85,7 +85,7 @@ static void uart_close() {
 
 static void *write_serial(void* arg) {
 	while(1) {
-		if(mq.head != NULL && mq.last != mq.tail && (fona_fd_w > 0 || (uart_init() == 0))) {
+		if(mq.head != NULL && mq.last != mq.tail && fona_fd_w > 0) {
 			if(mq.last == NULL) {
 				write(fona_fd_w, (mq.head)->msg, strlen((mq.head)->msg));
 				mq.last = mq.head;
@@ -93,9 +93,6 @@ static void *write_serial(void* arg) {
 				write(fona_fd_w, (mq.last->next)->msg, strlen((mq.last->next)->msg));
 				mq.last = mq.last->next;
 			}
-		}
-		if(mq.state == FINISHED) {
-			uart_close();
 		}
 		sleep(1);
 	}

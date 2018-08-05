@@ -29,9 +29,14 @@ void sigint_handler() {
 int main() {
 	pthread_t read_serial_pthread, write_serial_pthread;
 
+	signal(SIGINT, sigint_handler);
+
 	create_pipes();
 
-	signal(SIGINT, sigint_handler);
+	if(uart_init() != 0) {
+		fprintf(stderr, "[Fatal] Cannot open /dev/serial0 for r/w\n");
+		return 1;
+	}
 
 	if(pthread_create(&read_serial_pthread, NULL, read_serial, NULL)) {
 		fprintf(stderr, "[Error] Failed to create a thread to read to serial\n");
@@ -42,8 +47,8 @@ int main() {
 		fprintf(stderr, "[Error] Failed to create a thread to write to serial\n");
 		return 2;
 	}
-	while(1) {
-		sleep(1);
-	}
+
+	pthread_join(write_serial_pthread, NULL);
+	pthread_join(read_serial_pthread, NULL);
 	return 0;
 }
