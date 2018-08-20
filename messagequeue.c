@@ -5,7 +5,6 @@
 typedef enum State {
 	STARTED,
 	FINISHED,
-	SUBSCRIBE,
 } State;
 
 typedef struct Message {
