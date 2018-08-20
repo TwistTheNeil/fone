@@ -16,6 +16,7 @@ void sigint_handler();
 
 void graceful_exit() {
 	mq_cleanup();
+	sq_cleanup();
 	unlink(fa2s_ctl);
 	unlink(fs2a_ctl);
 }
@@ -30,8 +31,11 @@ int main() {
 	pthread_t read_serial_pthread, write_serial_pthread;
 
 	signal(SIGINT, sigint_handler);
+	signal(SIGPIPE, SIG_IGN);
 
-	create_pipes();
+	create_ctl_pipes();
+	mq_init();
+	sq_init();
 
 	if(uart_init() != 0) {
 		fprintf(stderr, "[Fatal] Cannot open /dev/serial0 for r/w\n");
