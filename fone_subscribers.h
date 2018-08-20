@@ -24,6 +24,7 @@ SubscriberQueue sq;
 
 void sq_init() {
 	sq.head = NULL;
+	sq.tail = NULL;
 }
 
 void sq_push(char *keyword, int fs2a_fd, int fa2s_fd) {
@@ -46,12 +47,12 @@ void sq_push(char *keyword, int fs2a_fd, int fa2s_fd) {
 	}
 }
 
-void subscription_remove(char *keyword, int fa2s_fd) {
+void subscription_remove_by_fd(int fs2a_fd) {
 	Subscriber *s = sq.head;
 	Subscriber *p = NULL;
 
 	while(s != NULL) {
-		if((strncmp(keyword, s->keyword, strlen(keyword)) == 0) && (fa2s_fd == s->fa2s_fd)) {
+		if(fs2a_fd == s->fs2a_fd) {
 			free(s->keyword);
 			if(p == NULL) {
 				sq.head = s->next;
@@ -67,8 +68,14 @@ void subscription_remove(char *keyword, int fa2s_fd) {
 }
 
 void sq_cleanup() {
-	while(sq.head != NULL) {
-		subscription_remove(sq.head->keyword, sq.head->fa2s_fd);
+	Subscriber *i = sq.head;
+	Subscriber *j = NULL;
+
+	while(i != NULL) {
+		j = i;
+		free(i->keyword);
+		i = i->next;
+		free(j);
 	}
 	sq_init();
 }

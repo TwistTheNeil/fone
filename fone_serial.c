@@ -1,5 +1,6 @@
 #include<termios.h>
 #include"messagequeue.c"
+#include"fone_subscribers.h"
 
 /* Prototypes */
 static int uart_init();
@@ -100,15 +101,30 @@ static void *write_serial(void* arg) {
 
 static void *read_serial(void* arg) {
 	char buf[PIPE_BUF];
-	char pbuf[PIPE_BUF];
-	int sequential_newline = 0;
+	int sent_to_subscriber = 0;
+	Subscriber *subscriber = NULL;
 
 	memset(buf, 0, PIPE_BUF);
-	memset(pbuf, 0, PIPE_BUF);
 
 	while(1) {
-		if(mq.head != NULL && fona_fd_r > 0) {
+		if((mq.head != NULL || sq.head != NULL) && fona_fd_r > 0) {
 			read(fona_fd_r, buf, PIPE_BUF);
+			/* First check if there are any clients subscribing to the message */
+			subscriber = sq.head;
+			while(subscriber != NULL) {
+				if(strstr(buf, subscriber->keyword) != NULL) {
+					write(subscriber->fs2a_fd, buf, strlen(buf));
+					sent_to_subscriber = 1;
+					//sleep(1);
+				}
+				subscriber = subscriber->next;
+			}
+			if(sent_to_subscriber == 1) {
+				memset(buf, 0, PIPE_BUF);
+				sent_to_subscriber = 0;
+				sleep(1);
+				continue;
+			}
 
 			/*
 			 * since the read() call above blocks, we need to make sure that
@@ -117,7 +133,6 @@ static void *read_serial(void* arg) {
 			if(mq.head != NULL) {
 				write(mq.head->fs2a_fd, buf, strlen(buf));
 				memset(buf, 0, PIPE_BUF);
-				memset(pbuf, 0, PIPE_BUF);
 			}
 		}
 
