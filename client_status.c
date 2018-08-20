@@ -16,8 +16,12 @@ int main() {
 	}
 
 	write(out_fd, "AT\r\n", 4);
-	read(in_fd, buf, PIPE_BUF);
-	printf("Returned:  %s\n", buf);
+	while(1) {
+		read(in_fd, buf, PIPE_BUF);
+		printf("Returned:  %s\n", buf);
+		if(buf[strlen(buf)-1] == '\n')
+			break;
+	}
 
 	free(buf);
 	return send_finish(&in_fd, &out_fd);
