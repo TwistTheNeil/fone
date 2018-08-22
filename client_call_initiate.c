@@ -9,6 +9,7 @@
 
 int in_fd, out_fd;
 int ongoing_call = 0;
+static pthread_t thread_subscription;
 
 void *listen_for_subscription(void *arg);
 void hangup_sender();
@@ -16,6 +17,7 @@ void hangup_sender();
 void hangup_sender() {
 	write(out_fd, "ATH\r\n", 5);
 	ongoing_call = 2;
+	pthread_cancel(thread_subscription);
 }
 
 void *listen_for_subscription(void *arg) {
@@ -40,13 +42,13 @@ void *listen_for_subscription(void *arg) {
 			break;
 		}
 		memset(buf, 0, PIPE_BUF);
+		sleep(1);
 	}
 	free(buf);
 	send_finish(&in_fd, &out_fd);
 }
 
 int main(int argc, char **argv) {
-	pthread_t thread_subscription;
 	char *serial_cmd = calloc(17, sizeof(char));
 	char *buf = calloc(PIPE_BUF, sizeof(char));
 
@@ -69,12 +71,21 @@ int main(int argc, char **argv) {
 	if(send_hello(&in_fd, &out_fd) != 0) {
 		fprintf(stderr, "[Fatal] Can't connect to server\n");
 	} else {
-		snprintf(serial_cmd, 16, "ATD%s;\r\n", argv[1]);
-		write(out_fd, serial_cmd, strlen(serial_cmd));
+		write(out_fd, "AT+CMGF=0\r\n", 11);
+		sleep(1);
 		read(in_fd, buf, PIPE_BUF);
 		if(strstr(buf, "OK") != NULL) {
-			printf("yay\n");
-			ongoing_call = 1;
+			memset(buf, 0, PIPE_BUF);
+			snprintf(serial_cmd, 16, "ATD%s;\r\n", argv[1]);
+			write(out_fd, serial_cmd, strlen(serial_cmd));
+			sleep(1);
+			read(in_fd, buf, PIPE_BUF);
+			if(strstr(buf, "OK") != NULL) {
+				ongoing_call = 1;
+			}
+		} else {
+			fprintf(stderr, "[Error] Couldn't set PDU mode\n");
+			pthread_cancel(thread_subscription);
 		}
 	}
 
