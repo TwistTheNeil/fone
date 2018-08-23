@@ -14,7 +14,6 @@ static void *process_subscriber(void *arg);
 static void *process_client(void *arg);
 static void *ctl_thread(void *arg);
 static int create_pipe(const char *pipe);
-static int create_pipes();
 
 static int create_data_pipes(char *name_reader, char *name_writer, char *name) {
 	/* Create wronly pipe */
@@ -80,6 +79,7 @@ static void *process_subscriber(void *arg) {
 
 		sleep(1);
 	}
+	return NULL;
 }
 
 static void *process_client(void *arg) {
@@ -124,6 +124,7 @@ static void *process_client(void *arg) {
 		}
 		sleep(1);
 	}
+	return NULL;
 }
 
 /*
@@ -190,6 +191,7 @@ static void *ctl_thread(void *arg) {
 			pthread_join(client_processor, NULL);
 		}
 	}
+	return NULL;
 }
 
 static int create_pipe(const char *pipe) {

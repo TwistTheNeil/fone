@@ -97,6 +97,7 @@ static void *write_serial(void* arg) {
 		}
 		sleep(1);
 	}
+	return NULL;
 }
 
 static void *read_serial(void* arg) {
@@ -139,4 +140,5 @@ static void *read_serial(void* arg) {
 		// TODO: Sane sleep time? perhaps in nanoseconds?
 		sleep(1);
 	}
+	return NULL;
 }
