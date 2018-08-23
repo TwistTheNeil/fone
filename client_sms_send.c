@@ -48,6 +48,7 @@ int main(int argc, char **argv) {
 	memset(buf, 0, PIPE_BUF);
 
 	write(out_fd, cmdbuf, strlen(cmdbuf));
+	free(cmdbuf);
 	read(in_fd, buf, PIPE_BUF);
 	if(strncmp(buf, "\r\n>", 3) == 0) {
 		memset(buf, 0, PIPE_BUF);
@@ -60,9 +61,18 @@ int main(int argc, char **argv) {
 		send_finish(&in_fd, &out_fd);
 		return 1;
 	}
+	free(msgbuf);
+
+	/* Set PDU mode */
+	memset(buf, 0, PIPE_BUF);
+	write(out_fd, "AT+CMGF=0\r\n", 11);
+	read(in_fd, buf, PIPE_BUF);
+	if(strstr(buf, "OK") == NULL) {
+		fprintf(stderr, "[Error] Couldn't set PDU mode\n");
+		send_finish(&in_fd, &out_fd);
+		return 1;
+	}
 
 	free(buf);
-	free(cmdbuf);
-	free(msgbuf);
 	return send_finish(&in_fd, &out_fd);
 }
