@@ -11,10 +11,19 @@ static int ringing = 0;
 static int in_fd, out_fd;
 static int listening = 0;
 static int ongoing_call = 0;
+static int quit_called = 0;
+static pthread_t thread_subscription;
 
 void *listen_for_subscription(void *arg);
 void *answer_call(void *arg);
 void hangup_call();
+void quit();
+
+void quit() {
+	printf("[Info] Stopping client (any ongoing calls will continue)\n");
+	pthread_cancel(thread_subscription);
+	quit_called = 1;
+}
 
 void *answer_call(void *arg) {
 	char *buf = calloc(PIPE_BUF, sizeof(char));
@@ -47,6 +56,7 @@ void hangup_call() {
 	printf("%s\n", buf);
 
 	ongoing_call = 0;
+	ringing = 0;
 
 	free(buf);
 	send_finish(&in_fd, &out_fd);
@@ -57,7 +67,7 @@ void *listen_for_subscription(void *arg) {
 	char *found;
 	char *tofree = buf;
 
-	/* Subscribe to "RING", "NO CARRIER", and "CLIP" */
+	/* Subscribe to "NO CARRIER", and "CLIP" */
 	if(send_subscribe(&in_fd, &out_fd) != 0) {
 		fprintf(stderr, "[Fatal] Unable to subscribe to serial\n");
 		return NULL;
@@ -96,11 +106,12 @@ void *listen_for_subscription(void *arg) {
 }
 
 int main() {
-	pthread_t thread_subscription, thread_answer_call;
 	size_t response_size = 2;
 	char *response = NULL;
+	pthread_t thread_answer_call;
 
 	signal(SIGINT, hangup_call);
+	signal(SIGQUIT, quit);
 
 	init_fone_client();
 
@@ -109,7 +120,7 @@ int main() {
 		return 1;
 	}
 
-	while(1) {
+	while(!quit_called) {
 		if(listening == 1 && ringing == 1 && ongoing_call == 0) {
 			ongoing_call = 1;
 			printf("Answer call? (y/n)\n> ");
@@ -121,6 +132,8 @@ int main() {
 					continue;
 				}
 				pthread_join(thread_answer_call, NULL);
+			} else {
+				hangup_call();
 			}
 		}
 		sleep(1);
