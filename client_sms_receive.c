@@ -3,7 +3,6 @@
 #include<fcntl.h>
 #include<unistd.h>
 #include<limits.h>
-#include<pthread.h>
 #include<signal.h>
 #include"client_protocol.h"
 
@@ -19,8 +18,14 @@
 static int in_fd, out_fd;
 static char *buf;
 static char *qbuf;
+static int query = 0;
 
+void stop_sms_query();
 int fetch_sms();
+
+void stop_sms_query() {
+	query = 0;
+}
 
 int fetch_sms() {
 	char *temp;
@@ -115,10 +120,10 @@ int fetch_sms() {
 }
 
 int main() {
-//	signal(SIGINT, stop_subscription);
-//	TODO: ^
+	signal(SIGINT, stop_sms_query);
 
 	init_fone_client();
+	query = 1;
 
 	while(1) {
 		if(send_hello(&in_fd, &out_fd) != 0) {
@@ -128,6 +133,9 @@ int main() {
 		fetch_sms();
 		if(send_finish(&in_fd, &out_fd) != 0) {
 			fprintf(stderr, "[Error] Failed to finish conversation with server\n");
+			break;
+		}
+		if(query == 0) {
 			break;
 		}
 		sleep(10);
