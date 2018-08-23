@@ -54,5 +54,6 @@ int main() {
 
 	pthread_join(write_serial_pthread, NULL);
 	pthread_join(read_serial_pthread, NULL);
+	uart_close();
 	return 0;
 }
