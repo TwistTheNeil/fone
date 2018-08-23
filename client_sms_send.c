@@ -39,20 +39,25 @@ int main(int argc, char **argv) {
 
 	write(out_fd, "AT+CMGF=1\r\n", 11);
 	read(in_fd, buf, PIPE_BUF);
-	printf("Returned:  %s\n", buf);
+	if(strstr(buf, "OK") == NULL) {
+		fprintf(stderr, "[Error] Couldn't set text mode\n");
+		send_finish(&in_fd, &out_fd);
+		return 1;
+	}
 
 	memset(buf, 0, PIPE_BUF);
 
 	write(out_fd, cmdbuf, strlen(cmdbuf));
 	read(in_fd, buf, PIPE_BUF);
-	printf("Returned:  %s\n", buf);
 	if(strncmp(buf, "\r\n>", 3) == 0) {
 		memset(buf, 0, PIPE_BUF);
 		write(out_fd, msgbuf, strlen(msgbuf));
 		write(out_fd, ctrlz, strlen(ctrlz));
 		read(in_fd, buf, PIPE_BUF);
-		printf("Returned:  %s\n", buf);
+		printf("%s\n", buf);
 	} else {
+		fprintf(stderr, "[Info] Wasn't prompted for message input. Exiting.\n");
+		send_finish(&in_fd, &out_fd);
 		return 1;
 	}
 
