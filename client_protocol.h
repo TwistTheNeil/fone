@@ -2,7 +2,7 @@
 #include<signal.h>
 #include"shared_pipes.h"
 
-int init_fone_client() {
+void init_fone_client() {
 	signal(SIGPIPE, SIG_IGN);
 }
 
@@ -12,7 +12,6 @@ int init_fone_client() {
  */
 int send_subscribe(int *in_fd, int *out_fd) {
 	int fd;
-	int retval;
 	char buf[PIPE_BUF];
 	char *pipename = calloc(PIPE_NAME_LENGTH, sizeof(char));
 
@@ -73,7 +72,6 @@ int send_subscribe(int *in_fd, int *out_fd) {
  */
 int send_hello(int *in_fd, int *out_fd) {
 	int fd;
-	int retval;
 	char buf[PIPE_BUF];
 	char *pipename = calloc(PIPE_NAME_LENGTH, sizeof(char));
 

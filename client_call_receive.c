@@ -40,6 +40,7 @@ void *answer_call(void *arg) {
 
 	free(buf);
 	send_finish(&in_fd, &out_fd);
+	return NULL;
 }
 
 void hangup_call() {
@@ -103,6 +104,7 @@ void *listen_for_subscription(void *arg) {
 	}
 	listening = 0;
 	free(tofree);
+	return NULL;
 }
 
 int main() {

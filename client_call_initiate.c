@@ -46,6 +46,7 @@ void *listen_for_subscription(void *arg) {
 	}
 	free(buf);
 	send_finish(&in_fd, &out_fd);
+	return NULL;
 }
 
 int main(int argc, char **argv) {

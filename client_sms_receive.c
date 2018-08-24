@@ -29,7 +29,7 @@ void stop_sms_query() {
 
 int fetch_sms() {
 	char *temp;
-	char *found, *tofree, *bufptr;
+	char *found, *tofree;
 	int messages = 0;
 	int i, j;
 
