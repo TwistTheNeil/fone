@@ -28,7 +28,7 @@ client_call: client_call_initiate.c client_call_receive.c
 all: clean-out server clients
 
 clean-pipe:
-	find . -type p -exec rm -f {} \;
+	find /tmp/ -maxdepth 1 -user $${USER} -type p \( -name "fa2s*" -o -name "fs2a*" \) -exec rm -f {} \;
 
 clean-out:
 	rm -f $(BUILD_DIR)/*out
