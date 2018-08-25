@@ -131,13 +131,13 @@ static void *read_serial(void* arg) {
 			 * since the read() call above blocks, we need to make sure that
 			 * the head wasn't popped
 			 */
-			if(mq.head != NULL) {
+			if(mq.head != NULL && mq.head->fs2a_fd > 0) {
 				write(mq.head->fs2a_fd, buf, strlen(buf));
-				memset(buf, 0, PIPE_BUF);
 			}
+
+			memset(buf, 0, PIPE_BUF);
 		}
 
-		// TODO: Sane sleep time? perhaps in nanoseconds?
 		sleep(1);
 	}
 	return NULL;
