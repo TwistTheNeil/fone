@@ -1,4 +1,3 @@
-#include<termios.h>
 #include"messagequeue.c"
 #include"fone_subscribers.h"
 

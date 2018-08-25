@@ -1,11 +1,3 @@
-#include<string.h>
-#include<stdio.h>
-#include<pthread.h>
-#include<stdlib.h>
-#include<fcntl.h>
-#include<sys/stat.h>
-#include<unistd.h>
-#include<limits.h>
 #include"shared_pipes.h"
 #include"fone_serial.c"
 
