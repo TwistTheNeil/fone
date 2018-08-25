@@ -17,7 +17,7 @@ static int create_pipe(const char *pipe);
 
 static int create_data_pipes(char *name_reader, char *name_writer, char *name) {
 	/* Create wronly pipe */
-	snprintf(name_writer, PIPE_NAME_LENGTH, "fs2a_");
+	snprintf(name_writer, PIPE_NAME_LENGTH, "/tmp/fs2a_");
 	strncat(name_writer, name, 32);
 	// can we access though?
 	if(create_pipe(name_writer) != 0) {
@@ -26,7 +26,7 @@ static int create_data_pipes(char *name_reader, char *name_writer, char *name) {
 	}
 
 	/* Create rdonly pipe */
-	snprintf(name_reader, PIPE_NAME_LENGTH, "fa2s_");
+	snprintf(name_reader, PIPE_NAME_LENGTH, "/tmp/fa2s_");
 	strncat(name_reader, name, 32);
 	// can we access though
 	if(create_pipe(name_reader) != 0) {

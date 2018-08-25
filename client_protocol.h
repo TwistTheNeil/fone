@@ -48,14 +48,14 @@ int send_subscribe(int *in_fd, int *out_fd) {
 	 * Construct data pipe names and
 	 * open them for communication
 	 */
-	snprintf(pipename, PIPE_NAME_LENGTH, "fs2a_");
+	snprintf(pipename, PIPE_NAME_LENGTH, "/tmp/fs2a_");
 	*in_fd = open(strncat(pipename, buf, 32), O_RDONLY);
 	if(*in_fd < 0) {
 		fprintf(stderr, "[Error]: Couldn't open data pipe for reading (%s)\n", pipename);
 		return 1;
 	}
 
-	snprintf(pipename, PIPE_NAME_LENGTH, "fa2s_");
+	snprintf(pipename, PIPE_NAME_LENGTH, "/tmp/fa2s_");
 	*out_fd = open(strncat(pipename, buf, 32), O_WRONLY);
 	if(*out_fd < 0) {
 		fprintf(stderr, "[Error]: Couldn't data pipe for writing (%s)\n", pipename);
@@ -108,16 +108,15 @@ int send_hello(int *in_fd, int *out_fd) {
 	 * Construct data pipe names and
 	 * open them for communication
 	 */
-	pipename[0] = 'f'; pipename[1] = 's'; pipename[2] = '2'; pipename[3] = 'a';
-	pipename[4] = '_';
+	snprintf(pipename, PIPE_NAME_LENGTH, "/tmp/fs2a_");
 	*in_fd = open(strncat(pipename, buf, 32), O_RDONLY);
 	if(*in_fd < 0) {
 		fprintf(stderr, "[Error]: Couldn't open data pipe for reading (%s)\n", pipename);
 		return 1;
 	}
 
-	pipename[1] = 'a'; pipename[3] = 's';
-	*out_fd = open(pipename, O_WRONLY);
+	snprintf(pipename, PIPE_NAME_LENGTH, "/tmp/fa2s_");
+	*out_fd = open(strncat(pipename, buf, 32), O_WRONLY);
 	if(*out_fd < 0) {
 		fprintf(stderr, "[Error]: Couldn't data pipe for writing (%s)\n", pipename);
 		return 1;
