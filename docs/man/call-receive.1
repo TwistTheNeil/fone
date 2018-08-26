@@ -1,0 +1,17 @@
+.TH CALL-RECEIVE 1
+.SH NAME
+CALL-RECEIVE \- Receive phone calls using the fone protocol via a foneserver
+.SH SYNOPSIS
+.B call-receive
+.SH DESCRIPTION
+.B call-receive
+is a client which uses the fone protocol to receive phone calls.
+It will write a 'subscribe' to a foneserver control pipe (/tmp/fa2s_ctl) subscribing to the +CLIP notification and will wait until the server responds on the receiving control pipe (/tmp/fs2a_ctl) with a private transaction pipe for data exchange.
+When
+.B call-receive
+receives a +CLIP notification, it will prompt the user with a contact number and whether or not to answer the call.
+A call may be dropped at any point by sending a SIGINT.
+The client may be stopped at any time by sending SIGQUIT.
+The client sends a 'finish' message to the foneserver to signal that it has been stopped.
+.SH "SEE ALSO"
+foneserver(1)

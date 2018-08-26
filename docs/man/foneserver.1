@@ -1,0 +1,25 @@
+.TH FONESERVER 1
+.SH NAME
+foneserver \- establish a connection to the serial interface and serves fone clients
+.SH SYNOPSIS
+.B foneserver
+.SH DESCRIPTION
+.B foneserver
+establishes a connection to the serial interface and accepts transactions from fone clients.
+During startup, the server will initialize two names pipes acting as control pipes (fs2a which is a write only pipe to clients, fa2s which is a read only pipe from clients).
+These ctl pipes accept init messages (either hello or subscribe) from clients and upon validation of init sequence will create two named pipes for data passing between the client and server threads.
+The ctl pipes also act as a queue for clients.
+Since reads are blocked, only one client is processed at a time for commands (except subscriptions - discussed in a later section).
+The server will open connections to /dev/serial0 (read and write in separate threads) which is used to interface with the FONA 808 breakout board.
+When clients send transactions to the server, it will create a message or subscription queue and will send them to the serial connection threads accordingly and will send responses back to the clients through their respective pipes.
+.SH TRANSACTION TYPES
+The server has two transaction types:
+.TP 15
+- Commands
+These messages are transactions which the clients will want to pass to the serial interface in order to query or execute a task.
+.TP 15
+- Subscriptions
+These messages are transactions which the server will require notifying a client about a particular event or notification originating from the serial interface.
+Any activity matching an event or notification will be broadcasted to all clients subscribing to it.
+.SH "SEE ALSO"
+sms-send(1)
