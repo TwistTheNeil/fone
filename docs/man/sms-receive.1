@@ -9,5 +9,6 @@ is a client which uses the fone protocol to receive SMS messages.
 It will write a 'hello' to a foneserver control pipe (/tmp/fa2s_ctl) and will wait until the server responds on the receiving control pipe (/tmp/fs2a_ctl) with a private transaction pipe for data exchange.
 .B sms-receive
 will then send the transaction often to check for any updates to the onboard storage. If there are any messages stored, it will display the contact information, the timestamp, and the message itself to stdout.
+The client sends a 'finish' message to the foneserver to signal that it has been stopped.
 .SH "SEE ALSO"
 foneserver(1)
