@@ -14,6 +14,8 @@ Fone consists of a server which will speak to the FONA baord using the serial in
 
 Every client in the server will have a specialized function and will need to communicate to the FONA board via the server.
 
+Additional information may be found in the man pages in docs/man/
+
 ## Setup
 1. Setup build environment
 
