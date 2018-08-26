@@ -1,0 +1,15 @@
+.TH SMS-SEND 1
+.SH NAME
+SMS-SEND \- Send an SMS message using the fone protocol via a foneserver
+.SH SYNOPSIS
+.B sms-send
+[\fIphone-number\fR]
+message
+.SH DESCRIPTION
+.B sms-send
+is a client which uses the fone protocol to send an SMS message to a target cell phone number.
+It will write a 'hello' to a foneserver control pipe (/tmp/fa2s_ctl) and will wait until the server responds on the receiving control pipe (/tmp/fs2a_ctl) with a private transaction pipe for data exchange.
+.B sms-send
+will then send the transaction with the message over the data pipe to the foneserver and will receive a success of failure reply.
+.SH "SEE ALSO"
+foneserver(1)
