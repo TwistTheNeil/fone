@@ -20,7 +20,7 @@ Additional information may be found in the man pages in docs/man/
 1. Setup build environment
 
     ```
-    sudo apt install build-essential
+    sudo apt install build-essential screen
     ```
 
 2. [Setup serial communication](https://learn.adafruit.com/adafruits-raspberry-pi-lesson-5-using-a-console-cable/enabling-serial-console)
@@ -29,6 +29,28 @@ Additional information may be found in the man pages in docs/man/
   - FONA Vio -> Pi 3v3 power
   - FONA RX  -> Pi TXD
   - FONA TX  -> Pi RXD
+4. Configure ppp to connect to the network stack
+
+    ```
+    apt install ppp
+    cp etc/ppp/peers/fona /etc/ppp/peers/fona
+    chmod 644 /etc/ppp/peers/fona
+    cp etc/chatscripts/gprs /etc/chatscripts/gprs
+    chmod 644 /etc/chatscripts/gprs
+    ```
+
+5. Deploying (may be daemonized later)
+
+    ```
+    sudo pon fona
+    cd /path/to/fone/code
+    make all
+    screen -fa -d -m -S foneserver ./build/foneserver
+    # Wait until foneserver is running
+    screen -fa -d -m -S call-receive ./build/call-receive
+    screen -fa -d -m -S sms-receive ./build/sms-receive
+    ```
+
 
 ## Interesting configuration
 
