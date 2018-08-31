@@ -12,14 +12,22 @@ The ctl pipes also act as a queue for clients.
 Since reads are blocked, only one client is processed at a time for commands (except subscriptions - discussed in a later section).
 The server will open connections to /dev/serial0 (read and write in separate threads) which is used to interface with the FONA 808 breakout board.
 When clients send transactions to the server, it will create a message or subscription queue and will send them to the serial connection threads accordingly and will send responses back to the clients through their respective pipes.
+When clients end, they will send a 'finish' command which will prompt the server to clean up any memory associated with the client (message queue, subsciption queue, data pipes).
 .SH TRANSACTION TYPES
-The server has two transaction types:
+The server has three transaction types which it will receive from the client:
 .TP 15
 - Commands
 These messages are transactions which the clients will want to pass to the serial interface in order to query or execute a task.
+The client will first send a message 'hello' to the server via the ctl pipe.
+The server will respond with the name of a temporary data pipe which the client and server will then use for communication.
+Clients will then follow with any AT instructions or data via a data pipe.
+The server will send all received strings to the serial device for processing.
 .TP 15
 - Subscriptions
 These messages are transactions which the server will require notifying a client about a particular event or notification originating from the serial interface.
-Any activity matching an event or notification will be broadcasted to all clients subscribing to it.
+The client will first send a message 'subscribe' to the server via the ctl pipe.
+The server will respond with the name of a temporary data pipe which the client and server will then use for communication.
+Clients will then send the server the text which it would be subscribing to.
+Any activity matching an event or notification originating from the serial device will be broadcasted to all clients subscribing to it.
 .SH "SEE ALSO"
-sms-send(1)
+sms-send(1), sms-receive(1), call-send(1), call-receive(1)

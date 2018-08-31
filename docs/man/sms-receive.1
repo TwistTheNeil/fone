@@ -6,9 +6,12 @@ SMS-RECEIVE \- Receive SMS messages using the fone protocol via a foneserver
 .SH DESCRIPTION
 .B sms-receive
 is a client which uses the fone protocol to receive SMS messages.
-It will write a 'hello' to a foneserver control pipe (/tmp/fa2s_ctl) and will wait until the server responds on the receiving control pipe (/tmp/fs2a_ctl) with a private transaction pipe for data exchange.
+It will send a 'hello' command to a foneserver control pipe and will wait until the server responds on the receiving control pipe with a private transaction pipe for data exchange.
 .B sms-receive
-will then send the transaction often to check for any updates to the onboard storage. If there are any messages stored, it will display the contact information, the timestamp, and the message itself to stdout.
-The client sends a 'finish' message to the foneserver to signal that it has been stopped.
+will then send a message 'AT+CPMS?' as a commad transaction often to check for any updates to the onboard storage.
+If there are any messages stored, it will query each message using 'AT+CMGR=x' where x is a slot.
+The contact information, the timestamp, and the message itself will be displayed to stdout.
+The user can stop the client by sending a SIGINT.
+The client sends a finish command to the foneserver to signal that it has been stopped.
 .SH "SEE ALSO"
-foneserver(1)
+foneserver(1), sms-send(1)

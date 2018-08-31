@@ -7,9 +7,16 @@ CALL-SEND \- Initiate a phone call using the fone protocol via a foneserver
 .SH DESCRIPTION
 .B call-send
 is a client which uses the fone protocol to initiate a phone call to a target cell phone number.
-It will write a 'hello' to a foneserver control pipe (/tmp/fa2s_ctl) and will wait until the server responds on the receiving control pipe (/tmp/fs2a_ctl) with a private transaction pipe for data exchange.
-.B call-send
-will then send the transaction over the data pipe to the foneserver and will receive a success of failure reply.
+It will send a 'hello' command to a foneserver control pipe and will wait until the server responds on the receiving control pipe with a private transaction pipe for data exchange.
+It will also subscribe to 'NO CARRIER' so it knows when a target has dropped the call.
+It will then send a command transaction ATDnnnnnnnnn; (substituting n's with the target contact phone number) to the server via the data pipes.
 User may send the SIGINT signal to drop the call at any time.
+By doing this,
+.B call-send
+will send the server a message 'ATH' as a command transaction.
+If the target dropped the call, the subscription thread is cancelled after it sent a finish command transaction.
+Then,
+.B call-send
+will also send a finish command transaction.
 .SH "SEE ALSO"
 foneserver(1)
