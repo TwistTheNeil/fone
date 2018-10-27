@@ -1,4 +1,4 @@
-# Fone
+# Fone (Still WIP)
 
 This project is an implementation of a cell phone while keeping true to the unix philosophy.
 
