@@ -134,8 +134,8 @@ static void *read_serial(void* arg) {
 				write(mq.head->fs2a_fd, buf, strlen(buf));
 			}
 
-			memset(buf, 0, PIPE_BUF);
 		}
+		memset(buf, 0, PIPE_BUF);
 
 		sleep(1);
 	}
