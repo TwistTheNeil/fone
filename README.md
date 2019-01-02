@@ -81,3 +81,4 @@ AT+CNMI=2,0    # do not emit +CMTI notifications. This will need to change if mo
   - [x] Initiate Phone Call
   - [x] Answer Phone Call
   - [ ] Something else?
+- [ ] User Interfaces
