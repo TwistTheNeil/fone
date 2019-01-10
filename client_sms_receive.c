@@ -49,7 +49,7 @@ int fetch_sms() {
 	sleep(1);
 	read(in_fd, buf, PIPE_BUF);
 	if(strstr(buf, "OK") == NULL) {
-		fprintf(stderr, "[Error] Couldn't set text mode\n");
+		fprintf(stderr, "[Error] Couldn't set text mode (%s)\n", buf);
 		return 1;
 	}
 
