@@ -28,7 +28,6 @@ void sigint_handler() {
 
 int main() {
 	pthread_t read_serial_pthread, write_serial_pthread;
-	char *buf;
 
 	signal(SIGINT, sigint_handler);
 	signal(SIGPIPE, SIG_IGN);
@@ -41,21 +40,6 @@ int main() {
 		return 1;
 	}
 
-	/* Disable Echo  */
-	buf = strndup("ATE 0\r\n", 7);
-	mq_push(buf, -1, -1);
-	free(buf);
-
-	/* Enable Caller ID  */
-	buf = strndup("AT+CLIP=1\r\n", 11);
-	mq_push(buf, -1, -1);
-	free(buf);
-
-	/* Set volume = 20  */
-	buf = strndup("AT+CLVL=20\r\n", 12);
-	mq_push(buf, -1, -1);
-	free(buf);
-
 	if(pthread_create(&read_serial_pthread, NULL, read_serial, NULL)) {
 		fprintf(stderr, "[Error] Failed to create a thread to read to serial\n");
 		return 2;
@@ -66,9 +50,6 @@ int main() {
 		return 2;
 	}
 
-	/* Wait until configured and purge config from queue */
-	sleep(10);
-	mq.state = FINISHED;
 	mq_cleanup();
 
 	create_ctl_pipes();
