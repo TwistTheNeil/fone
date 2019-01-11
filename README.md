@@ -47,6 +47,7 @@ Additional information may be found in the man pages in docs/man/
     make all
     screen -fa -d -m -S foneserver ./build/foneserver
     # Wait until foneserver is running
+    ./build/fone_configure
     screen -fa -d -m -S call-receive ./build/call-receive
     screen -fa -d -m -S sms-receive ./build/sms-receive
     ```
