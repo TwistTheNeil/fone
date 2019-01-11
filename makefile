@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := server
-.PHONY: mkbuild server client clean-pipe clean-out client_status client_sms client_call
+.PHONY: mkbuild server client clean-pipe clean-out client_status client_sms client_call configuration
 CC := gcc
 BUILD_DIR := build
 LIBS := -lpthread
@@ -12,10 +12,13 @@ mkbuild:
 server: mkbuild foneserver.c fone_protocol.c fone_serial.c fone_subscribers.h messagequeue.c shared_pipes.h
 	$(CC) foneserver.c -o $(BUILD_DIR)/foneserver $(LIBS) $(CFLAGS)
 
-clients: mkbuild shared_pipes.h client_protocol.h client_status client_sms client_call
+clients: mkbuild shared_pipes.h client_protocol.h client_status client_sms client_call configuration
 	
 client_status: client_status.c
 	$(CC) client_status.c -o $(BUILD_DIR)/status $(CFLAGS)
+
+configuration: client_configuration.c
+	$(CC) client_configuration.c -o $(BUILD_DIR)/fone_configure $(CFLAGS)
 
 client_sms: client_sms_receive.c client_sms_send.c
 	$(CC) client_sms_receive.c -o $(BUILD_DIR)/sms-receive $(CFLAGS)
